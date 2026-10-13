@@ -7,7 +7,7 @@
         "@playwright/mcp@latest"
       ],
       "env": {
-        "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin"
+        "PATH": ""
       }
     },
     "google-sheets": {
@@ -17,10 +17,10 @@
         "@a1-x-tech/mcp-google-sheets"
       ],
       "env": {
-        "GOOGLE_SHEETS_CLIENT_ID": "152984051734-j1cin9nrj31qg6b277dop6mit3r37ul1.apps.googleusercontent.com",
-        "GOOGLE_SHEETS_CLIENT_SECRET": "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",
-        "GOOGLE_SHEETS_REFRESH_TOKEN": "1//0gSGw2bmR7fIRCgYIARAAGBASNwF-L9Irl7zt4Ne9aYHAp0AcpXIZsKNyVISrFMaudlQOhfIoGwxKEN_eX2fElV4RaGm2TARIo10",
-        "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin"
+        "GOOGLE_SHEETS_CLIENT_ID": "",
+        "GOOGLE_SHEETS_CLIENT_SECRET": "",
+        "GOOGLE_SHEETS_REFRESH_TOKEN": "",
+        "PATH": ""
       }
     }
   }
