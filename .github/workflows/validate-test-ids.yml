@@ -1,0 +1,88 @@
+name: Validate Test IDs
+
+on:
+  workflow_call:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'tests/**/*.spec.ts'
+
+jobs:
+  validate_test_ids:
+    runs-on: ubuntu-latest
+
+    env:
+      BASE_BRANCH: ${{ github.event.pull_request.base.ref || github.base_ref || 'main' }}
+      HEAD_BRANCH: ${{ github.event.pull_request.head.ref || github.head_ref }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login || github.actor }}
+      GOOGLE_SHEETS_SPREADSHEET_ID: ${{ secrets.GOOGLE_SHEETS_SPREADSHEET_ID }}
+      GOOGLE_SHEETS_CLIENT_ID: ${{ secrets.GOOGLE_SHEETS_CLIENT_ID }}
+      GOOGLE_SHEETS_CLIENT_SECRET: ${{ secrets.GOOGLE_SHEETS_CLIENT_SECRET }}
+      GOOGLE_SHEETS_REFRESH_TOKEN: ${{ secrets.GOOGLE_SHEETS_REFRESH_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Determine changed .spec.ts files
+        id: changed_files
+        run: |
+          echo "Checking for modified .spec.ts files in tests/..."
+          if [ -n "$BASE_BRANCH" ]; then
+            git fetch origin $BASE_BRANCH:refs/remotes/origin/$BASE_BRANCH || true
+            git diff --name-only origin/$BASE_BRANCH...HEAD | grep -E 'tests/.*\.spec\.ts$' > changed_files.txt || true
+          else
+            find tests -name "*.spec.ts" > changed_files.txt
+          fi
+          echo "Changed spec files:"
+          cat changed_files.txt || echo "No .spec.ts files modified"
+
+      - name: Validate Test IDs (Missing & Duplicate)
+        id: validate_test_ids
+        run: |
+          if [ -s changed_files.txt ]; then
+            echo "Validating Test IDs in spec files (missing and duplicate)..."
+            node integration-scripts/playwright/validate-test-ids.js changed_files.txt
+          else
+            echo "No .spec.ts files modified. Skipping Test ID validation."
+          fi
+
+      - name: Validate Max Test Cases per File
+        id: validate_max_tests
+        run: |
+          if [ -s changed_files.txt ]; then
+            echo "Validating Max Test Cases in changed spec files..."
+            node integration-scripts/playwright/validate-max-test_ids.js changed_files.txt
+          else
+            echo "No .spec.ts files modified. Skipping Max Test Cases validation."
+          fi
+
+      - name: Sync & Verify with Google Sheets
+        id: sync_google_sheets
+        run: |
+          if [ -s changed_files.txt ]; then
+            echo "Syncing & verifying changed test cases with Google Sheets..."
+            node integration-scripts/google-sheets/sync-test-cases.js changed_files.txt
+          else
+            echo "No .spec.ts files modified. Skipping Google Sheets sync."
+          fi

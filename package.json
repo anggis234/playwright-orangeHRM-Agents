@@ -3,7 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "validate:test-ids": "node integration-scripts/playwright/validate-test-ids.js",
+    "validate:max-tests": "node integration-scripts/playwright/validate-max-test_ids.js",
+    "validate:all": "npm run validate:test-ids && npm run validate:max-tests"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
