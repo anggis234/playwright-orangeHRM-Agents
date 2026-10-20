@@ -13,3 +13,7 @@ export const INVALID_USERNAME_USER = {
   password: process.env.ADMIN_PASSWORD || "admin123",
 };
 
+export const ADMIN_SEARCH_DATA = {
+  searchUsername: "girirajt19",
+};
+
