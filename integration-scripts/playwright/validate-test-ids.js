@@ -90,19 +90,21 @@ function main() {
     filesToValidate = listContent
       .split("\n")
       .map((f) => f.trim())
-      .filter((f) => f && f.endsWith(".spec.ts") && fs.existsSync(f));
+      .filter((f) => f && f.endsWith(".spec.ts"))
+      .map((f) => path.resolve(f))
+      .filter((f) => fs.existsSync(f));
   }
 
   // Fallback: validate all specs in tests/ if no files provided or list is empty
   if (filesToValidate.length === 0) {
-    filesToValidate = getAllSpecFiles(path.join(process.cwd(), "tests"));
+    filesToValidate = getAllSpecFiles(path.resolve(process.cwd(), "tests"));
   }
 
   // Also collect all existing tests in repo to detect cross-file duplicates
-  const allRepoSpecFiles = getAllSpecFiles(path.join(process.cwd(), "tests"));
+  const allRepoSpecFiles = getAllSpecFiles(path.resolve(process.cwd(), "tests"));
   const allRepoTests = [];
   for (const file of allRepoSpecFiles) {
-    allRepoTests.push(...extractTestsFromFile(file));
+    allRepoTests.push(...extractTestsFromFile(path.resolve(file)));
   }
 
   console.log(`\n🔍 Validating Test IDs in ${filesToValidate.length} spec file(s)...`);
@@ -116,8 +118,9 @@ function main() {
     const tests = extractTestsFromFile(file);
     for (const t of tests) {
       if (!t.testId) {
+        const displayFile = path.relative(process.cwd(), t.file);
         missingIdErrors.push(
-          `  ❌ [Missing Test ID] ${t.file}:${t.line} - "${t.title}" (tags: [${t.tags.join(", ")}])`
+          `  ❌ [Missing Test ID] ${displayFile}:${t.line} - "${t.title}" (tags: [${t.tags.join(", ")}])`
         );
         hasError = true;
       }
@@ -137,9 +140,16 @@ function main() {
   for (const [testId, occurrences] of testIdMap.entries()) {
     if (occurrences.length > 1) {
       // Only report if at least one occurrence is in the files being validated
-      const isRelevant = occurrences.some((o) => filesToValidate.includes(o.file));
+      const isRelevant = occurrences.some((o) =>
+        filesToValidate.includes(path.resolve(o.file))
+      );
       if (isRelevant) {
-        const locations = occurrences.map((o) => `${o.file}:${o.line} ("${o.title}")`).join("\n      - ");
+        const locations = occurrences
+          .map(
+            (o) =>
+              `${path.relative(process.cwd(), o.file)}:${o.line} ("${o.title}")`
+          )
+          .join("\n      - ");
         duplicateIdErrors.push(`  ❌ [Duplicate Test ID: ${testId}]\n      - ${locations}`);
         hasError = true;
       }
