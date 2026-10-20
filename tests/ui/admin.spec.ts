@@ -11,8 +11,8 @@ test.describe("Admin - User Management", () => {
   });
 
   test(
-    "FE-2: Search admin and admin searched will show in admin list",
-    { tag: ["@FE-2", "@Admin", "@High", "@smoke", "@regression"] },
+    "FE-3: Search admin and admin searched will show in admin list",
+    { tag: ["@FE-3", "@Admin", "@High", "@smoke", "@regression"] },
     async ({ adminPage }) => {
       await test.step("Click admin in sidebar menu", async () => {
         await adminPage.clickAdminMenu();
